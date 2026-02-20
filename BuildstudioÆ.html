@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildStudio • Aaron's Errands</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', system_ui, sans-serif; margin:0; background:#0a0a0a; }
+        #canvas-container { background: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px); background-size: 20px 20px; touch-action: none; }
+        .tool-btn { transition: all 0.15s cubic-bezier(0.4,0,0.2,1); }
+        .tool-btn:active { transform: scale(0.88); }
+        .tool-btn.active { background-color: #10b981 !important; color: white; box-shadow: 0 0 0 4px rgba(16,185,129,0.5); }
+        canvas { touch-action: none; border-radius: 20px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5); }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-white">
+    <div class="flex-1 flex flex-col max-w-[1280px] mx-auto w-full bg-zinc-950 border-x border-zinc-800">
+        <!-- HEADER -->
+        <div class="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center px-6 justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-drafting-compass text-3xl text-emerald-500"></i>
+                <span class="text-2xl font-bold tracking-tighter">BuildStudio</span>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="undo()" class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm flex items-center gap-2">Undo</button>
+                <button onclick="redo()" class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm flex items-center gap-2">Redo</button>
+                <button onclick="exportPNG()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold flex items-center gap-2">Export PNG</button>
+            </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="flex flex-1 flex-col md:flex-row overflow-hidden">
+            <!-- CAD -->
+            <div class="flex-1 flex flex-col">
+                <div class="flex flex-1 overflow-hidden">
+                    <!-- Toolbar -->
+                    <div id="toolbar" class="w-16 bg-zinc-900 border-r border-zinc-800 flex flex-col items-center pt-8 gap-6">
+                        <div data-tool="select" class="tool-btn active w-12 h-12 flex items-center justify-center text-3xl rounded-2xl cursor-pointer">👆</div>
+                        <div data-tool="pencil" class="tool-btn w-12 h-12 flex items-center justify-center text-3xl rounded-2xl cursor-pointer">✏️</div>
+                        <div data-tool="line" class="tool-btn w-12 h-12 flex items-center justify-center text-3xl rounded-2xl cursor-pointer">─</div>
+                        <div data-tool="rect" class="tool-btn w-12 h-12 flex items-center justify-center text-3xl rounded-2xl cursor-pointer">⬛</div>
+                        <div data-tool="circle" class="tool-btn w-12 h-12 flex items-center justify-center text-3xl rounded-2xl cursor-pointer">⚪</div>
+                        <div data-tool="text" class="tool-btn w-12 h-12 flex items-center justify-center text-3xl rounded-2xl cursor-pointer">A</div>
+                        <div class="h-px w-8 bg-zinc-700 my-4"></div>
+                        <div onclick="deleteSelected()" class="w-12 h-12 flex items-center justify-center text-3xl rounded-2xl cursor-pointer text-red-400">🗑️</div>
+                        <div onclick="clearCanvas()" class="w-12 h-12 flex items-center justify-center text-3xl rounded-2xl cursor-pointer">📄</div>
+                    </div>
+                    <!-- Canvas -->
+                    <div id="canvas-container" class="flex-1 flex items-center justify-center bg-[#f8fafc] p-8 overflow-auto">
+                        <canvas id="c" width="920" height="640" class="max-w-full"></canvas>
+                    </div>
+                </div>
+                <div class="h-12 bg-zinc-900 border-t border-zinc-800 flex items-center px-6 text-sm">
+                    <span id="current-tool" class="font-medium text-emerald-400">Current tool: Select</span>
+                    <span class="ml-auto">1 grid = 1 ft • Snap ON • Niagara 2026</span>
+                    <button onclick="toggleGrid()" id="grid-btn" class="ml-6 text-emerald-400 font-medium">Grid ON</button>
+                </div>
+            </div>
+
+            <!-- AI -->
+            <div class="w-full md:w-96 flex flex-col border-t md:border-t-0 md:border-l border-zinc-800 bg-zinc-900">
+                <div class="p-5 border-b border-zinc-800 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">🛠️</div>
+                    <div>
+                        <div class="font-semibold">BuildBuddy AI</div>
+                        <div class="text-xs text-emerald-400">Draws live on canvas • 2026 Niagara prices</div>
+                    </div>
+                    <button onclick="clearChat()" class="ml-auto text-zinc-400 hover:text-white">🗑️</button>
+                </div>
+                <div id="chat" class="flex-1 p-5 overflow-y-auto bg-zinc-950 space-y-5 text-sm"></div>
+                <div class="p-5 border-t border-zinc-800 bg-zinc-900">
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="quickAction('draw 12x16 patio')" class="text-sm bg-emerald-900/70 hover:bg-emerald-800 px-5 py-2.5 rounded-2xl">12×16 Patio</button>
+                        <button onclick="quickAction('draw 10x20 deck')" class="text-sm bg-emerald-900/70 hover:bg-emerald-800 px-5 py-2.5 rounded-2xl">10×20 Deck</button>
+                        <button onclick="quickAction('draw 20x30 garage')" class="text-sm bg-emerald-900/70 hover:bg-emerald-800 px-5 py-2.5 rounded-2xl">20×30 Garage</button>
+                        <button onclick="quickAction('patio cost')" class="text-sm bg-amber-900/70 hover:bg-amber-800 px-5 py-2.5 rounded-2xl">Patio Cost 2026</button>
+                    </div>
+                    <div class="flex gap-3">
+                        <input id="userInput" onkeypress="if(event.key==='Enter') sendMessage()" placeholder="draw 12x16 patio..." class="flex-1 bg-zinc-800 border border-zinc-700 rounded-3xl px-5 py-3.5 text-sm focus:outline-none focus:border-emerald-500">
+                        <button onclick="sendMessage()" class="w-12 h-12 bg-emerald-600 hover:bg-emerald-500 rounded-3xl flex items-center justify-center text-white">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// FULL WORKING CODE — this is the polished version
+let canvas, currentTool = 'select', gridSize = 20, showGrid = true;
+let gridGroup = null, history = [], historyStep = -1, drawingObject = null;
+let startX = 0, startY = 0;
+let strokeColor = '#111827', fillColor = '#bae6fd', strokeWidth = 12;
+let isLoadingHistory = false, suppressHistory = false;
+const CANVAS_WIDTH = 920, CANVAS_HEIGHT = 640;
+
+function initCanvas() {
+    canvas = new fabric.Canvas('c', {width: CANVAS_WIDTH, height: CANVAS_HEIGHT, backgroundColor: '#f8fafc', selection: true, preserveObjectStacking: true});
+    canvas.freeDrawingBrush.color = strokeColor;
+    canvas.freeDrawingBrush.width = strokeWidth;
+    canvas.wrapperEl.style.touchAction = 'none';
+
+    canvas.on('mouse:down', handleMouseDown);
+    canvas.on('mouse:move', handleMouseMove);
+    canvas.on('mouse:up', handleMouseUp);
+    canvas.on('object:modified', saveHistory);
+    canvas.on('object:added', () => { if (!suppressHistory) saveHistory(); });
+    canvas.on('object:removed', () => { if (!suppressHistory) saveHistory(); });
+
+    updateGrid();
+    saveHistory();
+    setTool('select');
+
+    // Demo
+    const demo = new fabric.Rect({left:190, top:150, width:540, height:340, fill:'#67e8f9', stroke:'#1e2937', strokeWidth:16, rx:24});
+    canvas.add(demo);
+    const lbl = new fabric.IText('YOUR PROJECT HERE', {left:280, top:230, fontSize:32, fill:'#111827', fontWeight:'700'});
+    canvas.add(lbl);
+    canvas.renderAll();
+}
+
+function setTool(tool) {
+    currentTool = tool;
+    document.querySelectorAll('#toolbar .tool-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.querySelector(`#toolbar [data-tool="${tool}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+    document.getElementById('current-tool').textContent = `Current tool: ${tool.charAt(0).toUpperCase() + tool.slice(1)}`;
+
+    canvas.isDrawingMode = (tool === 'pencil');
+    if (tool === 'pencil') {
+        canvas.freeDrawingBrush.color = strokeColor;
+        canvas.freeDrawingBrush.width = strokeWidth;
+    }
+    canvas.discardActiveObject();
+    canvas.renderAll();
+}
+
+function attachToolListeners() {
+    document.querySelectorAll('#toolbar [data-tool]').forEach(btn => {
+        btn.addEventListener('click', () => setTool(btn.dataset.tool));
+    });
+}
+
+// Mouse handlers, history, AI, etc. (same reliable code as before)
+function snap(v) { return Math.round(v / gridSize) * gridSize; }
+function updateGrid() {
+    suppressHistory = true;
+    if (gridGroup) canvas.remove(gridGroup);
+    if (!showGrid) { canvas.renderAll(); suppressHistory = false; return; }
+    const lines = [];
+    for (let x = 0; x <= CANVAS_WIDTH; x += gridSize) lines.push(new fabric.Line([x,0,x,CANVAS_HEIGHT], {stroke:'#cbd5e1', strokeWidth:1, selectable:false, evented:false}));
+    for (let y = 0; y <= CANVAS_HEIGHT; y += gridSize) lines.push(new fabric.Line([0,y,CANVAS_WIDTH,y], {stroke:'#cbd5e1', strokeWidth:1, selectable:false, evented:false}));
+    gridGroup = new fabric.Group(lines, {selectable:false, evented:false});
+    canvas.add(gridGroup); gridGroup.sendToBack(); canvas.renderAll();
+    suppressHistory = false;
+}
+function toggleGrid() { showGrid = !showGrid; document.getElementById('grid-btn').textContent = showGrid ? 'Grid ON' : 'Grid OFF'; updateGrid(); }
+function handleMouseDown(opt) { if (currentTool === 'select' || currentTool === 'pencil') return; const p = canvas.getPointer(opt.e); startX = p.x; startY = p.y;
+    if (currentTool === 'line') drawingObject = new fabric.Line([startX,startY,startX,startY], {stroke:strokeColor, strokeWidth, strokeLineCap:'round'});
+    else if (currentTool === 'rect') drawingObject = new fabric.Rect({left:startX, top:startY, width:0, height:0, fill:fillColor, stroke:strokeColor, strokeWidth});
+    else if (currentTool === 'circle') drawingObject = new fabric.Circle({left:startX, top:startY, radius:0, fill:fillColor, stroke:strokeColor, strokeWidth, originX:'center', originY:'center'});
+    else if (currentTool === 'text') {
+        const t = new fabric.IText('Label', {left:startX, top:startY, fontSize:24, fill:strokeColor, fontFamily:'Inter', editable:true});
+        canvas.add(t); canvas.setActiveObject(t); t.enterEditing(); saveHistory(); return;
+    }
+    if (drawingObject) canvas.add(drawingObject);
+}
+function handleMouseMove(opt) { if (!drawingObject) return; const p = canvas.getPointer(opt.e);
+    if (currentTool === 'line') drawingObject.set({x2:p.x, y2:p.y});
+    else if (currentTool === 'rect') drawingObject.set({left:Math.min(startX,p.x), top:Math.min(startY,p.y), width:Math.abs(p.x-startX), height:Math.abs(p.y-startY)});
+    else if (currentTool === 'circle') drawingObject.set({radius:Math.hypot(p.x-startX, p.y-startY)});
+    canvas.renderAll();
+}
+function handleMouseUp() { if (!drawingObject) return;
+    if (currentTool === 'line') drawingObject.set({x1:snap(drawingObject.x1),y1:snap(drawingObject.y1),x2:snap(drawingObject.x2),y2:snap(drawingObject.y2)});
+    else if (currentTool === 'rect') drawingObject.set({left:snap(drawingObject.left),top:snap(drawingObject.top),width:snap(drawingObject.width),height:snap(drawingObject.height)});
+    else if (currentTool === 'circle') drawingObject.set({left:snap(drawingObject.left),top:snap(drawingObject.top),radius:snap(drawingObject.radius)});
+    drawingObject = null; canvas.renderAll(); saveHistory();
+}
+function saveHistory() { if (suppressHistory || isLoadingHistory) return; suppressHistory = true;
+    if (gridGroup) canvas.remove(gridGroup);
+    history = history.slice(0, historyStep + 1);
+    history.push(canvas.toJSON());
+    historyStep = history.length - 1;
+    if (history.length > 30) { history.shift(); historyStep--; }
+    updateGrid(); suppressHistory = false;
+}
+function undo() { if (historyStep <= 0) return; isLoadingHistory = true; historyStep--; canvas.loadFromJSON(history[historyStep], () => { updateGrid(); canvas.renderAll(); isLoadingHistory = false; }); }
+function redo() { if (historyStep >= history.length-1) return; isLoadingHistory = true; historyStep++; canvas.loadFromJSON(history[historyStep], () => { updateGrid(); canvas.renderAll(); isLoadingHistory = false; }); }
+function deleteSelected() { const o = canvas.getActiveObject(); if(o) { canvas.remove(o); canvas.renderAll(); } }
+function clearCanvas() { if(confirm('Clear everything?')) { canvas.clear(); canvas.setBackgroundColor('#f8fafc'); updateGrid(); saveHistory(); canvas.renderAll(); } }
+function exportPNG() {
+    const link = document.createElement('a');
+    link.download = `buildstudio-${new Date().toISOString().slice(0,10)}.png`;
+    link.href = canvas.toDataURL({format:'png', quality:1, multiplier:2});
+    link.click();
+}
+
+// AI
+function addMessage(text, isUser) {
+    const chat = document.getElementById('chat');
+    const div = document.createElement('div');
+    div.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+    div.innerHTML = `<div class="${isUser ? 'bg-emerald-600 text-white' : 'bg-zinc-800 text-zinc-100'} max-w-[85%] px-5 py-3.5 rounded-3xl rounded-${isUser ? 'tr' : 'tl'}-none">${text}</div>`;
+    chat.appendChild(div); chat.scrollTop = chat.scrollHeight;
+}
+function showTyping() {
+    const chat = document.getElementById('chat');
+    const t = document.createElement('div'); t.id='typing'; t.className='flex justify-start';
+    t.innerHTML = `<div class="bg-zinc-800 px-5 py-3 rounded-3xl rounded-tl-none flex gap-1 text-zinc-400"><span class="animate-pulse">.</span><span class="animate-pulse animation-delay-200">.</span><span class="animate-pulse animation-delay-400">.</span></div>`;
+    chat.appendChild(t); chat.scrollTop = chat.scrollHeight; return t;
+}
+function parseAndDraw(text) {
+    const lower = text.toLowerCase();
+    const match = lower.match(/draw\s+(\d+)[x×by](\d+)/i);
+    if (!match) return false;
+    let w = parseInt(match[1]) * gridSize;
+    let h = parseInt(match[2]) * gridSize;
+    if (w > CANVAS_WIDTH * 0.85) w = CANVAS_WIDTH * 0.8;
+    if (h > CANVAS_HEIGHT * 0.85) h = CANVAS_HEIGHT * 0.8;
+    const rect = new fabric.Rect({left: CANVAS_WIDTH/2 - w/2 + (Math.random()*100-50), top: CANVAS_HEIGHT/2 - h/2 + (Math.random()*100-50), width: w, height: h, fill: lower.includes('patio') ? '#67e8f9' : '#86efac', stroke: '#1e2937', strokeWidth: 16, rx: 18, ry: 18});
+    canvas.add(rect);
+    const label = new fabric.IText(text.replace(/draw |sketch |add /gi,'').toUpperCase(), {left: rect.left + 40, top: rect.top + 40, fontSize: 28, fill: '#111827', fontWeight: '700', fontFamily: 'Inter'});
+    canvas.add(label);
+    canvas.setActiveObject(rect); saveHistory(); return true;
+}
+const knowledge = {
+    "patio cost|how much patio": "2026 Niagara installed: Concrete $12–$28/sq ft, Pavers $22–$38/sq ft.<br>12×16 patio ≈ $4,200–$9,700",
+    "deck cost|how much deck": "2026 decks $48–$95/sq ft.<br>10×20 deck ≈ $9,600–$19,000",
+    "default": "Try <strong>draw 12x16 patio</strong> — it appears instantly!"
+};
+function getResponse(input) {
+    const lower = input.toLowerCase();
+    for (let key in knowledge) if (key !== 'default' && key.split('|').some(k => lower.includes(k))) return knowledge[key];
+    return knowledge.default;
+}
+function sendMessage() {
+    const input = document.getElementById('userInput');
+    const text = input.value.trim();
+    if (!text) return;
+    addMessage(text, true); input.value = '';
+    const typing = showTyping();
+    setTimeout(() => {
+        typing.remove();
+        const drew = parseAndDraw(text);
+        addMessage(drew ? "✅ Drawn! Tap 👆 Select tool to move/resize" : getResponse(text), false);
+    }, 550);
+}
+function quickAction(cmd) { document.getElementById('userInput').value = cmd; sendMessage(); }
+function clearChat() { if(confirm('Clear chat?')) { document.getElementById('chat').innerHTML = ''; addMessage("Ready! Tap any quick button or type <strong>draw 12x16 patio</strong>", false); }}
+
+function launch() {
+    initCanvas();
+    attachToolListeners();
+    setTimeout(() => {
+        addMessage("👋 Welcome to BuildStudio!<br>Tap tools on the left or quick buttons below to draw.", false);
+    }, 600);
+}
+setTimeout(launch, 300);
+</script>
+</body>
+</html>
