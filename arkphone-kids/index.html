@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Arkphone Kids — Offline Emergency Menu</title>
+  <meta name="description" content="Local-first family emergency knowledge app. Works offline. AI is the librarian, not the source of truth." />
+
+  <!-- PWA -->
+  <link rel="manifest" href="public/manifest.webmanifest" />
+  <meta name="theme-color" content="#08111f" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Arkphone" />
+  <link rel="apple-touch-icon" href="public/icons/icon-192.svg" />
+
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+  <main class="app">
+
+    <div class="topbar">
+      <div class="brand-row">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">🛡️</div>
+          <div>
+            <h1>Arkphone Kids</h1>
+            <div class="subtitle">v0.2 · Offline emergency menu</div>
+          </div>
+        </div>
+        <div id="networkBadge" class="network-badge offline" role="status" aria-live="polite">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="networkText">Checking</span>
+        </div>
+      </div>
+
+      <div id="installPrompt" class="install-prompt" role="complementary" aria-label="Install app">
+        <span>📲 Install for quick offline access</span>
+        <div style="display:flex;gap:8px">
+          <button id="installBtn" class="install-btn" type="button">Install app</button>
+          <button id="installDismiss" class="install-dismiss" type="button">Not now</button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <label class="search-wrap" for="searchInput">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" autocomplete="off"
+                 placeholder="Search: power, water, cold, medical…"
+                 aria-label="Search emergency cards" />
+        </label>
+
+        <button id="familyButton" class="family-toggle" type="button" aria-pressed="false">
+          <strong>👨‍👩‍👧‍👦 Family Mode</strong>
+          <span class="switch" aria-hidden="true"><span></span></span>
+        </button>
+      </div>
+    </div>
+
+    <section class="global-warning" role="alert">
+      Draft cards. Human review required before field use.
+      <small>Arkphone principle: AI is the librarian, not the source of truth. Follow local emergency officials and trained responders first.</small>
+    </section>
+
+    <nav class="quick-grid" id="quickGrid" aria-label="Quick emergency access"></nav>
+
+    <div class="section-title">
+      <h2>Emergency Playbooks</h2>
+      <span class="count" id="visibleCount" aria-live="polite"></span>
+    </div>
+
+    <div id="emptyState" class="empty" role="status">No cards matched that search.</div>
+    <section id="cardList" class="card-list" aria-live="polite" aria-label="Emergency scenario cards"></section>
+
+    <div class="section-title">
+      <h2>Household Supply Readiness</h2>
+      <span class="count" id="supplyCount" aria-live="polite">0 checked</span>
+    </div>
+
+    <section class="checklist" aria-label="Supply readiness checklist">
+      <div class="label">Basic emergency kit</div>
+      <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="check-items" id="checkItems"></div>
+      <div class="add-row">
+        <input id="customSupply" type="text" placeholder="Add a custom supply item…"
+               aria-label="New supply item" />
+        <button id="addSupplyBtn" type="button">Add</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <strong>Offline note:</strong> this app is cached for offline use via a service worker.
+      Save to your home screen from your browser's Share / Add to Home Screen menu.
+      All cards are drafts — treat them as reminders, not medical or legal advice.
+      Follow trained responders and local officials first.
+    </footer>
+
+  </main>
+
+  <script type="module" src="src/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(reg => console.log('[SW] registered, scope:', reg.scope))
+          .catch(err => console.warn('[SW] registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
