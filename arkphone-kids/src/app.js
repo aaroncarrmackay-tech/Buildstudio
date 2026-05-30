@@ -188,7 +188,7 @@ function filterCards() {
   const term = $('#searchInput').value.trim().toLowerCase();
   let visible = 0;
   $$('.card').forEach(card => {
-    const show = !term || card.dataset.search.includes(term);
+    const show = !term || term.split(/\s+/).filter(Boolean).every(tok => card.dataset.search.includes(tok));
     card.classList.toggle('hidden', !show);
     if (show) visible++;
   });
