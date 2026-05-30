@@ -1,0 +1,14 @@
+{
+  "name": "arkphone-kids",
+  "version": "0.2.0",
+  "description": "Offline-first family emergency knowledge PWA",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npx serve@14 . --listen 3000 --no-clipboard",
+    "dev": "npx serve@14 . --listen 3000 --no-clipboard"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
