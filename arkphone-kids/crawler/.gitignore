@@ -1,0 +1,5 @@
+# Personal endpoint config — never commit this
+config.json
+
+# Crawl output — large files, regenerated each run
+output/

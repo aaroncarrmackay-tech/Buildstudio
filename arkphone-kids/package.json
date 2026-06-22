@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "npx serve@14 . --listen 3000 --no-clipboard",
-    "dev": "npx serve@14 . --listen 3000 --no-clipboard"
+    "dev": "npx serve@14 . --listen 3000 --no-clipboard",
+    "crawl": "node crawler/crawl.js"
   },
   "engines": {
     "node": ">=18"

@@ -1,0 +1,64 @@
+{
+  "empire": {
+    "endpoint": "http://localhost:11434/api/generate",
+    "apiType": "ollama",
+    "model": "llama3",
+    "headers": {}
+  },
+  "crawl": {
+    "delayMs": 2000,
+    "userAgent": "ArkphoneKids-Crawler/1.0 (family emergency prep; offline PWA)",
+    "timeoutMs": 15000,
+    "maxContentChars": 6000
+  },
+  "sources": [
+    {
+      "id": "power-outage",
+      "cardId": "power-outage",
+      "name": "Government of Canada — Get Prepared: Power outages",
+      "url": "https://www.getprepared.gc.ca/cnt/hzd/pwrflr-en.aspx"
+    },
+    {
+      "id": "co-prevention",
+      "cardId": "power-outage",
+      "name": "Health Canada — Carbon monoxide prevention",
+      "url": "https://www.canada.ca/en/health-canada/services/home-safety/carbon-monoxide.html"
+    },
+    {
+      "id": "ontario-power-outage",
+      "cardId": "power-outage",
+      "name": "Ontario — Power outages and blackouts",
+      "url": "https://www.ontario.ca/page/power-outages-what-you-should-know"
+    },
+    {
+      "id": "water-emergency",
+      "cardId": "water-notice",
+      "name": "Health Canada — Food and drinking water safety in an emergency",
+      "url": "https://www.canada.ca/en/health-canada/services/food-nutrition/food-safety/emergency-food-safety.html"
+    },
+    {
+      "id": "boil-water",
+      "cardId": "water-notice",
+      "name": "Health Canada — Boil water advisory guidance",
+      "url": "https://www.canada.ca/en/health-canada/services/environmental-workplace-health/water-quality/drinking-water/drinking-water-advisories-canada.html"
+    },
+    {
+      "id": "extreme-cold",
+      "cardId": "winter-heat",
+      "name": "Health Canada — Extreme cold",
+      "url": "https://www.canada.ca/en/health-canada/services/healthy-living/your-health/environment/extreme-cold.html"
+    },
+    {
+      "id": "redcross-firstaid",
+      "cardId": "medical",
+      "name": "Canadian Red Cross — First Aid tips and resources",
+      "url": "https://www.redcross.ca/training-and-certification/first-aid-tips-and-resources"
+    },
+    {
+      "id": "hazmat-shelter",
+      "cardId": "shelter",
+      "name": "Government of Canada — Get Prepared: Hazardous material releases",
+      "url": "https://www.getprepared.gc.ca/cnt/hzd/mtr-en.aspx"
+    }
+  ]
+}
